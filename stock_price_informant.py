@@ -41,7 +41,7 @@ def select_stocks() -> List[str]:
 def fetch_data(parameter: str, tickers_list: List[str], start_date: date) -> pd.DataFrame:
     data = pd.DataFrame(columns=tickers_list)
     for ticker in tickers_list:
-        data[ticker] = yf.download(ticker, start_date, date.today())[parameter]
+        data[ticker] = yf.download(ticker, start_date)[parameter]
     # Remove nonexistent stocks
     return data.dropna(axis='columns')
 

@@ -52,8 +52,7 @@ def set_start_date() -> date:
             return set_start_date()
 
 
-
-def main():
+def mgiain() -> None:
     parameter = select_parameter()
     start_date = set_start_date()
     tickers_list = select_stocks()

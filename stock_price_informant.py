@@ -1,6 +1,10 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 
+"""A tool to track changes in stock prices of various companies.
+
+Changes accumulate around 1 to display changes in value starting from a certain date"""
+
 from datetime import date
 from typing import List
 

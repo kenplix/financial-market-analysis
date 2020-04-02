@@ -3,6 +3,7 @@ import yfinance as yf
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 stock = yf.download('AAPL', '2019-01-01')
 
 # Adjusted closing price
@@ -52,14 +53,16 @@ print(cum_monthly_return.tail())
 
 
 ticker = ['AFLT.ME','DSKY.ME','IRAO.ME','PIKK.ME', 'PLZL.ME','SBER.ME','ENRU.ME']
-
 stock = yf.download(ticker,'2018-01-01')
-print(type(stock))
-
-# Дневная доходность в `daily_close_px`
+# Daily yield
 daily_pct_change = stock['Adj Close'].pct_change()
-
-# Распределение
+# Distribution
 daily_pct_change.hist(bins=50, sharex=True, figsize=(20,8))
+plt.show()
+
+
+from pandas.plotting import scatter_matrix
+# Dispersion matrix
+scatter_matrix(daily_pct_change, diagonal='kde', alpha=0.1,figsize=(20,20))
 
 plt.show()

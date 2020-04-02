@@ -1,29 +1,40 @@
+from itertools import takewhile, repeat
+
 import yfinance as yf
 import matplotlib.pyplot as plt
 import pandas as pd
 
 parameters = ['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
+PARAMS_INFO = f'Available parameters: {"   ".join(parameters)}\n' \
+               'Which parameter do you want to display?\n'
+
+STOCK_INFO = f'Which stock do you want to display?\n' \
+              'Press <Enter> to stop\n'
+
 parameter = ''
 while parameter not in parameters:
-    print(f'Available parameters: {"   ".join(parameters)}\n'
-           'Which parameter do you want to display?')
-    parameter = input().title()
+    parameter = input(PARAMS_INFO).title()
 
-# Identify publicly traded shares of a particular stock on a particular stock market
-tickers_list = ['AAPL', 'WMT', 'IBM', 'MU', 'BA', 'AXP']
+tickers_list = []
+while True:
+    stock_name = input(STOCK_INFO).upper()
+    if not stock_name and tickers_list:
+        break
+    elif stock_name:
+        tickers_list.append(stock_name)
 
-D = yf.download('AAPL', '2019-04-01', '2020-04-01')
-print(D.keys())
 
 data = pd.DataFrame(columns=tickers_list)
 # Fetch the data
 for ticker in tickers_list:
     data[ticker] = yf.download(ticker, '2019-04-01', '2020-04-01')[parameter]
 
-# Plot all the close prices
+# Remove nonexistent stocks
+data = data.dropna(axis='columns')
 aligned_percentage = data.pct_change() + 1
 cumulative_product = aligned_percentage.cumprod()
 
+# Plot all the prices
 cumulative_product.plot(figsize=(10, 7))
 plt.legend()
 plt.title(parameter, fontsize=16)

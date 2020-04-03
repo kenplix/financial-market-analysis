@@ -1,3 +1,3 @@
 # Financial Market Analysis
-Analyzes and explores changes in financial
-market quotes in a given time period
+Analyzes and investigates changes in stock market
+quotes of a financial market in a given period of time

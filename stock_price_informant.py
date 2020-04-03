@@ -24,14 +24,14 @@ STOCK_INFO = f'Which stock do you want to display?\n' \
 def select_parameter() -> str:
     parameter = ''
     while parameter not in parameters:
-        parameter = input(PARAMS_INFO).title()
+        parameter = input(PARAMS_INFO).strip().title()
     return parameter
 
 
 def select_stocks() -> List[str]:
     tickers_list = []
     while True:
-        stock_name = input(STOCK_INFO).upper()
+        stock_name = input(STOCK_INFO).strip().upper()
         if not stock_name and tickers_list:
             break
         elif stock_name:
@@ -41,7 +41,7 @@ def select_stocks() -> List[str]:
 
 def fetch_data(parameter: str, tickers_list: List[str], start_date: date) -> pd.DataFrame:
     data = yf.download(tickers_list, start_date)[parameter]
-    return data.dropna(axis='columns')
+    return data.fillna(0)
 
 
 def set_start_date() -> date:
@@ -58,7 +58,7 @@ def set_start_date() -> date:
 
 
 DAILY, MONTHLY, QUARTER = 'daily', 'monthly', 'quarter'
-modes = [DAILY, MONTHLY, QUARTER]
+modes = (DAILY, MONTHLY, QUARTER)
 
 
 def profitability(stocks: pd.DataFrame, mode: str = DAILY, log: bool = False) -> pd.DataFrame:
@@ -73,16 +73,16 @@ def profitability(stocks: pd.DataFrame, mode: str = DAILY, log: bool = False) ->
     if mode not in modes:
         raise ValueError(f'Unknown mode - {mode}')
 
-    daily = stocks.pct_change()
-    daily.fillna(0, inplace=True)
-
     data_modes = {
-        DAILY: lambda: daily,
-        MONTHLY: lambda: stocks.resample('BM').apply(lambda x: x[-1]),
-        QUARTER: lambda: stocks.resample("4M").mean()
+        DAILY: lambda: stocks,
+        MONTHLY: lambda: stocks.resample('M').apply(lambda x: x[-1]),
+        QUARTER: lambda: stocks.resample('4M').mean()
     }
-
-    return np.log(data_modes[mode]() + 1) if log else data_modes[mode]()
+    # preparing data
+    data = data_modes[mode]().pct_change()
+    data = data.replace([np.inf, -np.inf], 0)
+    data = data.fillna(0)
+    return np.log(data + 1) if log else data
 
 
 def cumulative_profitability(prof: pd.DataFrame) -> pd.DataFrame:
@@ -113,9 +113,12 @@ class Visualizator:
 
 
 def main():
-    parameter = select_parameter()
-    start_date = set_start_date()
-    tickers_list = select_stocks()
+    # parameter = select_parameter()
+    parameter = 'Adj Close'
+    # start_date = set_start_date()
+    start_date = date(2000, 1, 1)
+    # tickers_list = select_stocks()
+    tickers_list = ['WMT', 'IBM', 'MU', 'BA', 'AXP']
     data = fetch_data(parameter, tickers_list, start_date)
     prof = profitability(stocks=data, mode=DAILY)
 

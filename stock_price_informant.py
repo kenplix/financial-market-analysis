@@ -1,16 +1,17 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 
-"""A tool to track changes in stock prices of various companies.
-
-Changes accumulate around 1 to display changes in value starting from a certain date"""
+"""A tool for analyzing and tracking stock price movements of various companies"""
 
 from datetime import date
 from typing import List
+from dataclasses import dataclass
 
 import yfinance as yf
+import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+
 
 parameters = ['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
 PARAMS_INFO = f'Available parameters: {"   ".join(parameters)}\n' \
@@ -18,8 +19,6 @@ PARAMS_INFO = f'Available parameters: {"   ".join(parameters)}\n' \
 
 STOCK_INFO = f'Which stock do you want to display?\n' \
              'Press <Enter> to stop\n'
-
-__all__ = ['select_parameter', 'select_stocks', 'fetch_data', 'set_start_date']
 
 
 def select_parameter() -> str:
@@ -58,22 +57,72 @@ def set_start_date() -> date:
             return set_start_date()
 
 
-def main() -> None:
+DAILY, MONTHLY, QUARTER = 'daily', 'monthly', 'quarter'
+modes = [DAILY, MONTHLY, QUARTER]
+
+
+def profitability(stocks: pd.DataFrame, mode: str = DAILY, log: bool = False) -> pd.DataFrame:
+    """Represents the percentage change in the value of the stock in one trading day
+
+    :param stocks : Downloaded data about the stock parameter
+    :param mode: Displays what data to collect
+    :param log: Allows you to better understand and explore changes over time
+    :return: Profitability on the collected data
+    """
+
+    if mode not in modes:
+        raise ValueError(f'Unknown mode - {mode}')
+
+    daily = stocks.pct_change()
+    daily.fillna(0, inplace=True)
+
+    data_modes = {
+        DAILY: lambda: daily,
+        MONTHLY: lambda: stocks.resample('BM').apply(lambda x: x[-1]),
+        QUARTER: lambda: stocks.resample("4M").mean()
+    }
+
+    return np.log(data_modes[mode]() + 1) if log else data_modes[mode]()
+
+
+def cumulative_profitability(prof: pd.DataFrame) -> pd.DataFrame:
+    """Determines the value of investments after a certain period of time"""
+    return (1 + prof).cumprod()
+
+
+@dataclass
+class Visualizator:
+    """Renders profitability data"""
+    profitability: pd.DataFrame
+
+    def distribution(self) -> None:
+        self.profitability.hist(bins=50, sharex=True, figsize=(20, 8))
+        plt.show()
+
+    def scatter(self) -> None:
+        pd.plotting.scatter_matrix(self.profitability, diagonal='kde', alpha=0.1, figsize=(20, 20))
+        plt.show()
+
+    def cumulative(self) -> None:
+        cumulative_profitability(self.profitability).plot(figsize=(10, 7))
+        plt.legend()
+        plt.ylabel('Price', fontsize=14)
+        plt.xlabel('Year', fontsize=14)
+        plt.grid(which="major", color='k', linestyle='-.', linewidth=0.5)
+        plt.show()
+
+
+def main():
     parameter = select_parameter()
     start_date = set_start_date()
     tickers_list = select_stocks()
     data = fetch_data(parameter, tickers_list, start_date)
-    aligned_percentage = data.pct_change() + 1
-    cumulative_product = aligned_percentage.cumprod()
+    prof = profitability(stocks=data, mode=DAILY)
 
-    # Plot all the prices
-    cumulative_product.plot(figsize=(10, 7))
-    plt.legend()
-    plt.title(parameter, fontsize=16)
-    plt.ylabel('Price', fontsize=14)
-    plt.xlabel('Year', fontsize=14)
-    plt.grid(which="major", color='k', linestyle='-.', linewidth=0.5)
-    plt.show()
+    v = Visualizator(prof)
+    v.distribution()
+    v.scatter()
+    v.cumulative()
 
 
 if __name__ == '__main__':

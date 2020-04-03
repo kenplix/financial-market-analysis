@@ -19,6 +19,8 @@ PARAMS_INFO = f'Available parameters: {"   ".join(parameters)}\n' \
 STOCK_INFO = f'Which stock do you want to display?\n' \
              'Press <Enter> to stop\n'
 
+__all__ = ['select_parameter', 'select_stocks', 'fetch_data', 'set_start_date']
+
 
 def select_parameter() -> str:
     parameter = ''

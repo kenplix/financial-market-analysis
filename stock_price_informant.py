@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!venv/bin/python3
 # -*- coding: UTF-8 -*-
 
 """A tool for analyzing and tracking stock price movements of various companies"""
